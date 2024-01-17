@@ -9,7 +9,7 @@
 - name: Packages setroubleshoot
   yum:
     name: setroubleshoot
-    state: installed
+    state: removed
 
 - name: Packages setroubleshoot-server
   yum:
