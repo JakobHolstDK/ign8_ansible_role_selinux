@@ -50,8 +50,8 @@ MAXKERNEL=$(echo $SESTATUS | awk -F"Max kernel policy version:" '{ print $2 }' |
 
 
 
-TOTAL=$(cat $SEALERTFILE | wc -l)
-SUCCESS=$(cat $SEALERTFILE | awk -F';' '{ print $6 }' |grep -c "success")
+TOTAL=$(cat /var/local/setroubleshoot.json|wc -l)
+SUCCESS=$(cat /var/local/setroubleshoot.json | grep "SELinux is preventing " |wc -l)
 FAILED=$(ls -l $SEALERTS | wc -l)
 
 printf "[\n"  > $SESTATUSFILE
