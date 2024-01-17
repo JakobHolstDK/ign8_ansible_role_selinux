@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+import time
+import requests
+import hashlib
+import  sys
+
+
+
+
+# read the file i argument  0
+#file = open(sys.argv[1], "r")
+
+#the file is a csv file with the following format
+#NODE,EVENT,DATE,TIME,SERIAL_NUM,EVENT_KIND,SESSION,SUBJ_PRIME,SUBJ_SEC,SUBJ_KIND,ACTION,RESULT,OBJ_PRIME,OBJ_SEC,OBJ_KIND,HOW
+#,BPF,12/01/2023,00:00:34,69556,bpf-program,,,,system,loaded-bpf-program,,715,,process,
+
+# read the file i argument  0
+# the filename must be the first argument and in this name
+# dashweb01fl.unicph.domain.sealert.csv
+
+#the node name is the first part of the filename without the .sealert.csv
+node = sys.argv[1].split(".")[0]
+#"append unicph.domain to the node name if is not there"
+if not "unicph.domain" in node:
+    node = node + ".unicph.domain"
+
+
+file = open(sys.argv[1], "r")
+#read the file line by line
+items = []
+for line in file:
+    #split the line into a list
+    item = line.split(",")
+
+    items.append(item)
+#close the file
+file.close()
+
+#remove the first line of the file
+items.pop(0)
+for item in items:
+    event = item[1]
+    print("event:" + event)
+    mydate = item[2]
+    print("---------------------")
+    # convert the date to the format YYYY-MM-DD
+    mydate = mydate.split("/")
+    mydate = "20" + mydate[2] + "-" + mydate[1] + "-" + mydate[0]
+    print("mydate:" + mydate)
+    mytime = item[3]
+    print("mytime:" + mytime)
+    serial_num = item[4]
+    print("serialnum:" + serial_num)
+    event_kind = item[5]
+    print("eventkind:" + event_kind)
+    session = item[6]
+    print("session:" + session)
+    subj_prime = item[7]
+    print("subjprime:" + subj_prime)
+    subj_sec = item[8]
+    print("subj_sec:" + subj_sec)
+    subj_kind = item[9]
+    print("subj_kind:" + subj_kind)
+    action = item[10]
+    print("action:" + action)
+    result = item[11]
+    print("result:" +   result)
+    obj_prime = item[12]    
+    print("obj_prime:" + obj_prime)
+    obj_sec = item[13]
+    print("obj_sec:" + obj_sec)
+    obj_kind = item[14]
+    print("obj_kind:" + obj_kind)
+    how = item[15]
+    print("how:" + how)
+    print("*********************")
+
+
+
+# Set fake digesttext variable
+    digestestext = "%s%s%s%s%s" % (node, event, mydate, mytime, serial_num)
+    print(digestestext)
+    checksum = hashlib.sha256(digestestext.encode()).hexdigest()
+    print(checksum)
+    checksum = time.time()
+    print(checksum)
+    selinux_api = "http://127.0.0.1:8000"
+
+    url = f"{selinux_api}/selinux/upload_selinux_event/"
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        'digest': checksum,
+        'hostname': node,
+        'event': event,
+        'date': mydate,
+        'time': mytime,
+        'serial_num': serial_num,
+        'event_kind': event_kind,
+        'session': session,
+        'subj_prime': subj_prime,
+        'subj_sec':  subj_sec,
+        'subj_kind': subj_kind,
+        'action': action,
+        'result': result,
+        'obj_prime': obj_prime,
+        'obj_sec': "none",
+        'obj_kind': obj_kind,
+        'how': how
+    }
+    verify = False
+    response = requests.post(url, json=data, headers=headers, verify=False)  # Set verify to False to ignore SSL certificate validation
+
+
