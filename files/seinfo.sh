@@ -6,6 +6,9 @@ SEALERTS="/var/local/sealerts"
 SETROUBLESHOOTFILE="/var/local/setroubleshoot.json"
 SESTSTATUSBFILE="/var/local/sestatusb.json"
 
+touch $SEALERTFILE
+
+
 journalctl  -u setroubleshootd.service  --output json --since "1 month ago"  > $SETROUBLESHOOTFILE
 
 for id in $(journalctl  -u setroubleshootd.service  --output json|jq . |grep "For complete SELinux messages run:" |awk -F'sealert -l ' '{print $2 }' |awk -F'"' '{ print $1 }')
