@@ -3,6 +3,7 @@ SESTATUSFILE="/var/local/sestatus.json"
 SEALERTFILE="/var/local/sealerts.csv"
 SEALERTARCHIVE="/var/local/sealerts.tar.gz"
 SEALERTS="/var/local/sealerts"
+mkdir $SEALERTS >/dev/null 2>&1
 SETROUBLESHOOTFILE="/var/local/setroubleshoot.json"
 SESTSTATUSBFILE="/var/local/sestatusb.json"
 
@@ -13,15 +14,15 @@ journalctl  -u setroubleshootd.service  --output json --since "1 month ago"  > $
 
 for id in $(journalctl  -u setroubleshootd.service  --output json|jq . |grep "For complete SELinux messages run:" |awk -F'sealert -l ' '{print $2 }' |awk -F'"' '{ print $1 }')
 do
-    if [[ -f $SEALERTS.$id ]];
+    if [[ -f $SEALERTS/$id ]];
     then
-        echo "File $SEALERTS.$id exists."
+        echo "File $SEALERTS/$id exists."
     else
-        echo "File $SEALERTS.$id does not exist."
-        sealert -l $id  > $SEALERTS.$id
+        echo "File $SEALERTS/$id does not exist."
+        sealert -l $id  > $SEALERTS/$id
     fi
 done
-tar cf $SEALERTARCHIVE $SEALERTS.*
+tar cf $SEALERTARCHIVE $SEALERTS/*
 sestatus -b > $SESTSTATUSBFILE 
 
 
@@ -51,7 +52,7 @@ MAXKERNEL=$(echo $SESTATUS | awk -F"Max kernel policy version:" '{ print $2 }' |
 
 TOTAL=$(cat $SEALERTFILE | wc -l)
 SUCCESS=$(cat $SEALERTFILE | awk -F';' '{ print $6 }' |grep -c "success")
-FAILED=$(cat $SEALERTFILE | awk -F';' '{ print $6 }' |grep -c "failed")
+FAILED=$(ls -l $SEALERTS | wc -l)
 
 printf "[\n"  > $SESTATUSFILE
 printf "  {\n" >> $SESTATUSFILE
@@ -74,3 +75,5 @@ printf "]\n" >> $SESTATUSFILE
 
 ls -l $SEALERTFILE
 ls -l $SESTATUSFILE
+ls -l $SEALERTARCHIVE
+
