@@ -4,7 +4,7 @@
   tasks:
   - name: "Collect selinux audit logs"
     vars:
-      - selinux_api: "http://selinuxapp01fl.unicph.domain/selinux"
+      - selinux_api: "http://ignite.openknowit.com/selinux"
     include_role:
       name: selinux_agent
   become: true
