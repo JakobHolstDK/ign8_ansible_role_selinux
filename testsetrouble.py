@@ -1,9 +1,15 @@
 import requests
 import pprint
 import os
+import sys
 import hashlib
 import time
 import json
+import redis
+
+
+r = redis.Redis()
+
 
 # ignore ssl warnings
 requests.packages.urllib3.disable_warnings()
@@ -48,24 +54,33 @@ def alligndateformat(date):
 
 
 def create_setrouble(entry):
-    #url = 'https://selinuxapp01fl.unicph.domain/selinux/api/setroubleshoot/upload/'  # Replace with your API endpoint URL
-    url = 'https://ignite.openknowit.com:/selinux/api/setroubleshoot/upload/'  # Replace with your API endpoint URL
+    url = 'http://selinuxapp01fl.unicph.domain/selinux/api/setroubleshoot/upload/'  # Replace with your API endpoint URL
+    #url = 'https://ignite.openknowit.com:/selinux/api/setroubleshoot/upload/'  # Replace with your API endpoint URL
     #test json string is in a file called testsetrouble.json
     response = requests.post(url, json=entry, verify = False)
-    print(response.status_code)
-    print(response.text)
-    print(response.reason)
     if response.status_code == 201:
-        print("Test event uploaded successfully.")
+        return True
     else:
         if response.status_code == 200:
-            print("Test event updated")
+            return True
         else:
-            print(f"Failed to upload test event. Status code: {response.status_code}")
-            print(response.text)
+            if response.status_code == 400:
+                return True
+            else:
+                print(f"Failed to upload test event. Status code: {response.status_code}")
+                print(response.status_code)
 
 def main():
+    count = 0
+    files = 0
+    lines = 0
+    alerts = 0
+    added = 0
     for file in os.listdir("/tmp/selinux/"):
+        filekey = "sealert:file:%s" % file
+        if r.exists(filekey):
+            next
+        files = files + 1
         if "setroubleshoot" in file:
             #"open file and read it"
             openfile = open("/tmp/selinux/%s" % file, "r")
@@ -73,7 +88,9 @@ def main():
             openfile.close()
             #traverse file line by line
             jsonlines = jsonstring.splitlines()
+            lines = 0
             for line in jsonlines:
+                lines = lines + 1
                 line = line.replace("__CURSOR", "CURSOR")
                 line = line.replace("__REALTIME_TIMESTAMP", "REALTIMETIMESTAMP")
                 line = line.replace("__MONOTONIC_TIMESTAMP", "MONOTONICTIMESTAMP")
@@ -155,14 +172,25 @@ def main():
 
 
 
+                count = count + 1
+                if r.exists(myjson["CURSOR"]):
+                    print("%-012d %-012d %-012d %-64s  (CACHED)                       " % (count, alerts, added, myjson["HOSTNAME"]), end="\r")
+                else:
+                    if myjson["MESSAGE"] is not None:
+                        if "SELinux is preventing" in myjson["MESSAGE"]:
+                            alerts = alerts + 1
+                            mydigest = digest(myjson["MESSAGE"])
+                            myjson["digest"] = mydigest
+                            if create_setrouble(myjson):
+                                added = added +1
+                                r.set(myjson["CURSOR"], "True")
 
-                if myjson["MESSAGE"] is not None:
-                    if "SELinux is preventing" in myjson["MESSAGE"]:
-                        mydigest = digest(myjson["MESSAGE"])
-                        myjson["digest"] = mydigest
-                        create_setrouble(myjson)
+                            print("%-012d %-012d %-012d %-64s                                                     " % (count, alerts, added, myjson["HOSTNAME"]), end="\r")
 
-                
+        filekey = "sealert:file:%s" % file
+        print("%-60s loaded" % filekey)
+        r.set(filekey, "loaded", ex=6000)
+
 
 
 
@@ -172,7 +200,7 @@ def main():
 
                 
 if __name__ == '__main__':
-
+    print("start")
 
     main()
 
