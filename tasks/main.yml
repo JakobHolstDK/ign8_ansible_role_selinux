@@ -31,8 +31,8 @@
   
 - name: ansible_role_SElinux_agent | Get the alert csv file
   ansible.builtin.fetch:
-    src: /var/local/sealert.csv
-    dest: /tmp/selinux/{{ inventory_hostname }}.sealert.csv
+    src: /var/local/sealerts.csv
+    dest: /tmp/selinux/{{ inventory_hostname }}.sealerts.csv
     flat: yes
   become: True
 
