@@ -5,16 +5,16 @@
 - name: Packages setroubleshoot
   yum:
     name: jq
-    state: Present
+    state: installed
 - name: Packages setroubleshoot
   yum:
     name: setroubleshoot
-    state: Present
+    state: installed
 
 - name: Packages setroubleshoot-server
   yum:
     name: setroubleshoot-server
-    state: Present
+    state: installed
 
 - name: ansible_role_SElinux_agent | copy seinfo.sh
   become: True
