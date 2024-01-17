@@ -6,5 +6,5 @@
     vars:
       - selinux_api: "http://ignite.openknowit.com/selinux"
     include_role:
-      name: selinux_agent
+      name: ign8_ansible_role_selinux
   become: true
